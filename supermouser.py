@@ -1,4 +1,5 @@
 # pip install pyuserinput pyqt5
+# on linux also: sudo apt-get install  python-xlib
 import sys
 from pymouse import PyMouse
 from PyQt5.QtCore import *
