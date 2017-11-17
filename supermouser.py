@@ -113,6 +113,7 @@ class CustomWindow(QMainWindow):
                 self.mouse.position()[1],
                 1 # left click
             )
+            self.__resetWorkingArea()
             return
 
         if e.key() == Qt.Key_G:
@@ -121,6 +122,7 @@ class CustomWindow(QMainWindow):
                 self.mouse.position()[1],
                 2 # right click
             )
+            self.__resetWorkingArea()
             return
 
         if e.key() == Qt.Key_Q:
