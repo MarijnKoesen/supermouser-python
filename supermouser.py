@@ -22,12 +22,21 @@ def kill_proc_tree(pid, including_parent=True):
     if including_parent:
         parent.kill()
 
+def current_screen_size(mouse_position):
+    for screen in app.screens():
+        (x, y) = mouse_position
+        screen_geom = screen.availableGeometry();
+        if (x >= screen_geom.left() and y >= screen_geom.top() and
+            x <= screen_geom.left() + screen_geom.width() and
+            y <= screen_geom.top() + screen_geom.height()):
+           return screen_geom
+    return app.desktop().availableGeometry(-1)
 
 class CustomWindow(QMainWindow):
     def __init__(self, pymouse): 
         super().__init__()
         self.mouse = pymouse
-        self.currentScreenSize = app.desktop().availableGeometry()
+        self.currentScreenSize = current_screen_size(self.mouse.position())
         # number of pixels "excluded" using divide & conquer
         self.leftExcluded = 0
         self.rightExcluded = 0
@@ -43,67 +52,80 @@ class CustomWindow(QMainWindow):
         painter = QPainter(self)
 
         painter.setOpacity(0.5)
-        painter.setBrush(Qt.white)
-        painter.setPen(QPen(Qt.white))   
+        painter.setBrush(Qt.blue)
+        painter.setPen(QPen(Qt.blue))
 
-        painter.fillRect(self.leftRect, Qt.white)
-        painter.fillRect(self.rightRect, Qt.white)
-        painter.fillRect(self.topRect, Qt.white)
-        painter.fillRect(self.bottomRect, Qt.white)
+        painter.fillRect(self.leftRect, Qt.blue)
+        painter.fillRect(self.rightRect, Qt.blue)
+        painter.fillRect(self.topRect, Qt.blue)
+        painter.fillRect(self.bottomRect, Qt.blue)
 
     def keyPressEvent(self, e):
-        x, y = self.mouse.position()
         width = self.currentScreenSize.width()
         height = self.currentScreenSize.height()
+        offset_x = self.currentScreenSize.left()
+        offset_y = self.currentScreenSize.top()
+
+        # calculate x & y as if top-left of current screen is (0, 0)
+        x, y = self.mouse.position()
+        x -= offset_x
+        y -= offset_y
+
+        # however when using x & y, translate them back..
+        def mouse_move(x, y):
+            self.mouse.move(offset_x + x, offset_y + y)
+
+        def mouse_click(x, y, button):
+            self.mouse.click(offset_x + x, offset_y + y, button)
 
         if e.key() == Qt.Key_H:
             self.rightExcluded = width - x
             self.rightRect = QRect(x, 0, width, height)
+            mouse_move(int(x - ((x - self.leftExcluded) / 2)), y)
             self.repaint()
-            self.mouse.move(int(x - ((x - self.leftExcluded) / 2)), y)
             return
 
         if e.key() == Qt.Key_L:
             self.leftExcluded = x
             self.leftRect = QRect(0, 0, x, height)
+            mouse_move(int(x + ((width - x - self.rightExcluded) / 2)), y)
             self.repaint()
-            self.mouse.move(int(x + ((width - x - self.rightExcluded) / 2)), y)
             return
 
         if e.key() == Qt.Key_J:
             self.topExcluded = y
             self.topRect = QRect(0, 0, width, y)
+            mouse_move(x, int(y + ((height - y - self.bottomExcluded) / 2)))
             self.repaint()
-            self.mouse.move(x, int(y + ((height - y - self.bottomExcluded) / 2)))
             return
 
         if e.key() == Qt.Key_K:
             self.bottomExcluded = height - y
             self.bottomRect = QRect(0, y, width, height)
+            mouse_move(x, int(y - ((y - self.topExcluded) / 2)))
             self.repaint()
-            self.mouse.move(x, int(y - ((y - self.topExcluded) / 2)))
             return
 
         if e.key() == Qt.Key_F:
             self.close()
-            self.mouse.click(x, y, 1)  # left click
+            mouse_click(x, y, 1)  # left click
             kill_proc_tree(os.getpid())
             return
 
         if e.key() == Qt.Key_D:
             self.close()
-            self.mouse.click(x, y, 1)  # left click
-            self.mouse.click(x, y, 1)  # left click
+            mouse_click(x, y, 1)  # left click
+            mouse_click(x, y, 1)  # left click
             kill_proc_tree(os.getpid())
             return
 
         if e.key() == Qt.Key_G:
             self.close()
-            self.mouse.click(x, y, 2)  # right click
+            mouse_click(x, y, 2)  # right click
             kill_proc_tree(os.getpid())
             return
 
-        if e.key() == Qt.Key_Q:
+        if e.key() == Qt.Key_Q or e.key() == Qt.Key_Escape:
             self.close()
             kill_proc_tree(os.getpid())
 
@@ -136,7 +158,7 @@ elif platform == "win32":
 # Run the application
 # window.showFullScreen()  # on my X11 window manager this prevents all other windows from being drawn
 # window.showMaximized()   # .. and this also didn't do anything..
-dimensions = app.desktop().availableGeometry()
+dimensions = current_screen_size(mouse.position())
 window.move(0, 0)
 window.resize(dimensions.width(), dimensions.height())
 window.showNormal()
