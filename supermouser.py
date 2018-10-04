@@ -4,6 +4,7 @@
 import os
 import psutil
 import sys
+import time
 from pymouse import PyMouse
 from sys import platform
 from PyQt5.QtCore import *
@@ -32,11 +33,15 @@ def current_screen_size(mouse_position):
            return screen_geom
     return app.desktop().availableGeometry(-1)
 
+
 class CustomWindow(QMainWindow):
     def __init__(self, pymouse): 
         super().__init__()
         self.mouse = pymouse
         self.currentScreenSize = current_screen_size(self.mouse.position())
+        self.reset()
+
+    def reset(self):
         # number of pixels "excluded" using divide & conquer
         self.leftExcluded = 0
         self.rightExcluded = 0
@@ -108,21 +113,30 @@ class CustomWindow(QMainWindow):
 
         if e.key() == Qt.Key_F:
             self.close()
+            time.sleep(0.1)
             mouse_click(x, y, 1)  # left click
             kill_proc_tree(os.getpid())
             return
 
         if e.key() == Qt.Key_D:
             self.close()
+            time.sleep(0.1)
             mouse_click(x, y, 1)  # left click
+            time.sleep(0.1)
             mouse_click(x, y, 1)  # left click
             kill_proc_tree(os.getpid())
             return
 
         if e.key() == Qt.Key_G:
             self.close()
+            time.sleep(0.1)
             mouse_click(x, y, 2)  # right click
             kill_proc_tree(os.getpid())
+            return
+
+        if e.key() == Qt.Key_M:
+            self.reset()
+            self.repaint()
             return
 
         if e.key() == Qt.Key_Q or e.key() == Qt.Key_Escape:
@@ -139,27 +153,47 @@ window = CustomWindow(mouse)
 window.setWindowFlags(
     Qt.FramelessWindowHint
     | Qt.WindowStaysOnTopHint
-    #| Qt.WindowSystemMenuHint
-    #| Qt.WindowTitleHint
-    #| Qt.NoDropShadowWindowHint
-    #| Qt.Tool
+    | Qt.X11BypassWindowManagerHint
+   |  Qt.ActiveWindowFocusReason
+    | Qt.Tool
+    | Qt.ToolTip
+    | Qt.WindowActive
+ #   | Qt.WindowSystemMenuHint
+ #   | Qt.WindowTitleHint
+ #   | Qt.Widget
+ #   | Qt.NoDropShadowWindowHint
+#    | Qt.Popup
+#    | Qt.SplashScreen
+#    | Qt.Drawer
+#    | Qt.Sheet
+#    | Qt.Dialog
 )
-
+#window.setParent(0);# // Create TopLevel-Widget
+#setAttribute(Qt::WA_NoSystemBackground, true);
+#setAttribute(Qt::WA_TranslucentBackground, true);  
+#setAttribute(Qt::WA_PaintOnScreen); // not needed in Qt 5.2 and up
 window.setAttribute(Qt.WA_NoSystemBackground, True)
 window.setAttribute(Qt.WA_TranslucentBackground, True)
+if False:
+    window.setAttribute(Qt.WA_PaintOnScreen, True)
+    window.setStyleSheet("background:transparent;")
 
 if platform == "linux" or platform == "linux2":
-    window.setAttribute(Qt.WA_X11NetWmWindowTypeSplash, True)
+    pass # window.setAttribute(Qt.WA_X11NetWmWindowTypeSplash, True)
 elif platform == "darwin":
     pass
 elif platform == "win32":
     pass
 
 # Run the application
-# window.showFullScreen()  # on my X11 window manager this prevents all other windows from being drawn
-# window.showMaximized()   # .. and this also didn't do anything..
+#window.showFullScreen()  # on my X11 window manager this prevents all other windows from being drawn
+#window.showMaximized()   # .. and this also didn't do anything..
 dimensions = current_screen_size(mouse.position())
-window.move(0, 0)
+print(dimensions)
+window.move(dimensions.left(), dimensions.top())
 window.resize(dimensions.width(), dimensions.height())
 window.showNormal()
+window.raise_()
+window.activateWindow()
+
 sys.exit(app.exec_())
