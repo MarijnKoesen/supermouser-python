@@ -90,63 +90,63 @@ class CustomWindow(QMainWindow):
             self.mouse.position = (offset_x + x, offset_y + y)
 
         def mouse_click(x, y, button):
-            self.mouse.press(Button.left)
-            self.mouse.release(Button.left)
+            self.mouse.press(button)
+            self.mouse.release(button)
 
-        if e.key() == Qt.Key_H:
+        if e.key() == Qt.Key_H or e.key() == Qt.Key_Left:
             self.rightExcluded = width - x
             self.rightRect = QRect(x, 0, width, height)
             mouse_move(int(x - ((x - self.leftExcluded) / 2)), y)
             self.repaint()
             return
 
-        if e.key() == Qt.Key_L:
+        if e.key() == Qt.Key_L or e.key() == Qt.Key_Right:
             self.leftExcluded = x
             self.leftRect = QRect(0, 0, x, height)
             mouse_move(int(x + ((width - x - self.rightExcluded) / 2)), y)
             self.repaint()
             return
 
-        if e.key() == Qt.Key_J:
+        if e.key() == Qt.Key_J or e.key() == Qt.Key_Down:
             self.topExcluded = y
             self.topRect = QRect(0, 0, width, y)
             mouse_move(x, int(y + ((height - y - self.bottomExcluded) / 2)))
             self.repaint()
             return
 
-        if e.key() == Qt.Key_K:
+        if e.key() == Qt.Key_K or e.key() == Qt.Key_Up:
             self.bottomExcluded = height - y
             self.bottomRect = QRect(0, y, width, height)
             mouse_move(x, int(y - ((y - self.topExcluded) / 2)))
             self.repaint()
             return
 
-        if e.key() == Qt.Key_F:
+        if e.key() == Qt.Key_F or e.key() == Qt.Key_N:
             self.close()
             QApplication.processEvents()
 
             time.sleep(0.1)
-            mouse_click(x, y, 1)  # left click
+            mouse_click(x, y, Button.left)
             exitSuperMouser()
             return
 
-        if e.key() == Qt.Key_D:
+        if e.key() == Qt.Key_D or e.key() == Qt.Key_E:
             self.close()
             QApplication.processEvents()
 
             time.sleep(0.1)
-            mouse_click(x, y, 1)  # left click
+            mouse_click(x, y, Button.left)
             time.sleep(0.1)
-            mouse_click(x, y, 1)  # left click
+            mouse_click(x, y, Button.left)
             exitSuperMouser()
             return
 
-        if e.key() == Qt.Key_G:
+        if e.key() == Qt.Key_G or e.key() == Qt.Key_I:
             self.close()
             QApplication.processEvents()
 
             time.sleep(0.1)
-            mouse_click(x, y, 2)  # right click
+            mouse_click(x, y, Button.right)
             exitSuperMouser()
             return
 
