@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-# pip install pyuserinput pyqt5
+# pip install pyqt5 psutil pynput
 # on linux also: sudo apt-get install  python-xlib
 import os
 import psutil
 import sys
 import time
-from pymouse import PyMouse
+from pynput.mouse import Button, Controller
 from sys import platform
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -35,10 +35,10 @@ def current_screen_size(mouse_position):
 
 
 class CustomWindow(QMainWindow):
-    def __init__(self, pymouse): 
+    def __init__(self, mouse): 
         super().__init__()
-        self.mouse = pymouse
-        self.currentScreenSize = current_screen_size(self.mouse.position())
+        self.mouse = mouse
+        self.currentScreenSize = current_screen_size(self.mouse.position)
         self.reset()
 
     def reset(self):
@@ -72,16 +72,20 @@ class CustomWindow(QMainWindow):
         offset_y = self.currentScreenSize.top()
 
         # calculate x & y as if top-left of current screen is (0, 0)
-        x, y = self.mouse.position()
+        x, y = self.mouse.position
         x -= offset_x
         y -= offset_y
 
+        x = int(x)
+        y = int(y)
+
         # however when using x & y, translate them back..
         def mouse_move(x, y):
-            self.mouse.move(offset_x + x, offset_y + y)
+            self.mouse.position = (offset_x + x, offset_y + y)
 
         def mouse_click(x, y, button):
-            self.mouse.click(offset_x + x, offset_y + y, button)
+            self.mouse.press(Button.left)
+            self.mouse.release(Button.left)
 
         if e.key() == Qt.Key_H:
             self.rightExcluded = width - x
@@ -113,6 +117,8 @@ class CustomWindow(QMainWindow):
 
         if e.key() == Qt.Key_F:
             self.close()
+            QApplication.processEvents()
+
             time.sleep(0.1)
             mouse_click(x, y, 1)  # left click
             kill_proc_tree(os.getpid())
@@ -120,6 +126,8 @@ class CustomWindow(QMainWindow):
 
         if e.key() == Qt.Key_D:
             self.close()
+            QApplication.processEvents()
+
             time.sleep(0.1)
             mouse_click(x, y, 1)  # left click
             time.sleep(0.1)
@@ -129,6 +137,8 @@ class CustomWindow(QMainWindow):
 
         if e.key() == Qt.Key_G:
             self.close()
+            QApplication.processEvents()
+
             time.sleep(0.1)
             mouse_click(x, y, 2)  # right click
             kill_proc_tree(os.getpid())
@@ -147,7 +157,7 @@ class CustomWindow(QMainWindow):
 app = QApplication(sys.argv)
 
 # Create the main window
-mouse = PyMouse()
+mouse = Controller()
 window = CustomWindow(mouse)
 
 window.setWindowFlags(
@@ -157,6 +167,7 @@ window.setWindowFlags(
    |  Qt.ActiveWindowFocusReason
     | Qt.Tool
     | Qt.ToolTip
+    | Qt.WindowTransparentForInput
     | Qt.WindowActive
  #   | Qt.WindowSystemMenuHint
  #   | Qt.WindowTitleHint
@@ -188,8 +199,19 @@ elif platform == "win32":
 # Run the application
 #window.showFullScreen()  # on my X11 window manager this prevents all other windows from being drawn
 #window.showMaximized()   # .. and this also didn't do anything..
-dimensions = current_screen_size(mouse.position())
-print(dimensions)
+dimensions = current_screen_size(mouse.position)
+#print(dimensions)
+
+window.setWindowFlags(
+    Qt.FramelessWindowHint
+    #| Qt.WindowStaysOnTopHint
+    #| Qt.NoDropShadowWindowHint
+)
+
+window.setAttribute(Qt.WA_NoSystemBackground, True)
+window.setAttribute(Qt.WA_TranslucentBackground, True)
+#window.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+
 window.move(dimensions.left(), dimensions.top())
 window.resize(dimensions.width(), dimensions.height())
 window.showNormal()
