@@ -12,6 +12,12 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 
+def exitSuperMouser():
+    if platform == "linux" or platform == "linux2":
+        kill_proc_tree(os.getpid())
+    else:
+        app.quit()
+
 def kill_proc_tree(pid, including_parent=True):
     """
     Perhaps only needed in Linux, no matter what the proces just wouldn't exit.
@@ -121,7 +127,7 @@ class CustomWindow(QMainWindow):
 
             time.sleep(0.1)
             mouse_click(x, y, 1)  # left click
-            kill_proc_tree(os.getpid())
+            exitSuperMouser()
             return
 
         if e.key() == Qt.Key_D:
@@ -132,7 +138,7 @@ class CustomWindow(QMainWindow):
             mouse_click(x, y, 1)  # left click
             time.sleep(0.1)
             mouse_click(x, y, 1)  # left click
-            kill_proc_tree(os.getpid())
+            exitSuperMouser()
             return
 
         if e.key() == Qt.Key_G:
@@ -141,7 +147,7 @@ class CustomWindow(QMainWindow):
 
             time.sleep(0.1)
             mouse_click(x, y, 2)  # right click
-            kill_proc_tree(os.getpid())
+            exitSuperMouser()
             return
 
         if e.key() == Qt.Key_M:
@@ -151,7 +157,7 @@ class CustomWindow(QMainWindow):
 
         if e.key() == Qt.Key_Q or e.key() == Qt.Key_Escape:
             self.close()
-            kill_proc_tree(os.getpid())
+            exitSuperMouser()
 
 
 app = QApplication(sys.argv)
